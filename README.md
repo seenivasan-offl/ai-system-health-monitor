@@ -1,23 +1,24 @@
 # 🤖 AI System Health Monitor & Auto-Incident Ticket Generator
 
-A **real-world DevOps + AI integrated monitoring system** that continuously collects server health metrics (CPU, RAM, Disk), analyzes them using an AI model, and automatically generates incident tickets when abnormal conditions are detected — just like enterprise IT monitoring tools.
+A **real-world DevOps + AI integrated monitoring system** that continuously collects server health metrics (CPU, RAM, Disk), analyzes them using an AI model, automatically generates incident tickets when abnormal conditions are detected, and **sends email alerts for critical issues** — similar to enterprise IT monitoring tools.
 
-This project demonstrates **backend engineering, AI integration, rule-based automation, dashboard visualization, Docker deployment, and agent-based monitoring** — making it ideal for placement interviews.
+This project demonstrates **backend engineering, AI integration, rule-based automation, email alerting, dashboard visualization, Docker deployment, and agent-based monitoring** — making it ideal for placement interviews.
 
 ---
 
 ## 🚀 Project Overview
 
-Modern IT infrastructures require continuous monitoring.
+Modern IT infrastructures require continuous monitoring and instant alerting.
 This system simulates an **enterprise monitoring pipeline**:
 
 1. A **Python Agent** runs on a server and collects system metrics.
-2. The agent sends metrics to a **Spring Boot backend API**.
+2. The agent sends metrics to a **Spring Boot Backend API**.
 3. Backend stores metrics in **MySQL**.
 4. A **Rule Engine** determines severity.
 5. If abnormal → **AI model generates incident summary**.
 6. An **Incident Ticket** is automatically created.
-7. A **Web Dashboard** displays live metrics & incidents.
+7. **Email Alert Service** sends notifications for HIGH / CRITICAL incidents.
+8. A **Web Dashboard** displays live metrics & incidents.
 
 ---
 
@@ -34,6 +35,8 @@ This system simulates an **enterprise monitoring pipeline**:
       ↓
 [ Incident Ticket Generator ]
       ↓
+[ Email Alert Service ]
+      ↓
 [ HTML + Chart.js Dashboard ]
 ```
 
@@ -41,30 +44,73 @@ This system simulates an **enterprise monitoring pipeline**:
 
 ## 🧠 AI Integration
 
-This project uses **Groq Cloud AI API** with:
-
-**Model Used:**
-`llama-3.1-8b-instant`
+**AI Provider:** Groq Cloud
+**Model Used:** `llama-3.1-8b-instant`
 
 **Purpose:**
 Generate human-readable IT incident reports automatically from raw metrics.
 
-**Example AI Prompt:**
+**Example AI Prompt**
 
 ```
-Write a short IT incident report for:
+Write a short IT incident report:
 CPU=92%, RAM=88%, Disk=96%
 ```
 
-**Example AI Output:**
+**Example AI Output**
 
 ```
-Incident Report: High server utilization detected.
-CPU and Disk usage exceeded critical thresholds.
+Incident Report:
+Critical server resource utilization detected.
+CPU and Disk usage exceeded safe thresholds.
 Immediate investigation required.
 ```
 
-If AI service is unavailable, the system gracefully falls back to a basic summary — ensuring zero downtime.
+**Fail-Safe Mode:**
+If AI service is unavailable, a fallback summary is generated — ensuring system stability.
+
+---
+
+## 📧 Email Alert Integration
+
+### Why Email Alerts?
+
+In enterprise IT operations, engineers must be notified immediately when incidents occur.
+This system automatically sends **email alerts** for HIGH and CRITICAL incidents.
+
+### How It Works
+
+1. Rule engine detects HIGH / CRITICAL condition
+2. AI generates incident summary
+3. Incident saved to database
+4. EmailAlertService sends alert email
+5. Admin receives notification instantly
+
+### Email Trigger Rules
+
+| Priority | Email Sent |
+| -------- | ---------- |
+| CRITICAL | ✅ Yes      |
+| HIGH     | ✅ Yes      |
+| MEDIUM   | ❌ No       |
+| LOW      | ❌ No       |
+
+### Mail Technology Used
+
+* Spring Boot Mail Starter
+* SMTP (Gmail / Outlook / Custom Mail Server)
+
+### Email Configuration
+
+Users can configure their own email credentials in `application.yml`:
+
+```
+spring.mail.username = sender_email@gmail.com
+spring.mail.password = app_password
+alert.recipient.email = receiver_email@gmail.com
+```
+
+No code changes required.
 
 ---
 
@@ -77,6 +123,7 @@ If AI service is unavailable, the system gracefully falls back to a basic summar
 | AI Engine        | Groq LLaMA 3 API           |
 | Monitoring Agent | Python (psutil + requests) |
 | Frontend         | HTML + CSS + Chart.js      |
+| Email Alerts     | Spring Boot Mail (SMTP)    |
 | Containerization | Docker + Docker Compose    |
 
 ---
@@ -86,11 +133,11 @@ If AI service is unavailable, the system gracefully falls back to a basic summar
 ✔ Real-time CPU / RAM / Disk monitoring
 ✔ Automatic incident detection
 ✔ AI-generated incident summaries
-✔ Priority rule engine (LOW → CRITICAL)
+✔ Rule-based priority engine
+✔ Email alerts for critical issues
 ✔ MySQL persistence
 ✔ Live dashboard charts
 ✔ Fully Dockerized deployment
-✔ Multi-module real-world structure
 
 ---
 
@@ -98,24 +145,25 @@ If AI service is unavailable, the system gracefully falls back to a basic summar
 
 ```
 systemmonitor/
- ├── systemmonitor/       → Spring Boot backend
- ├── agent/               → Python monitoring agent
- ├── docker-compose.yml  → Multi-container setup
+ ├── systemmonitor/        → Spring Boot backend
+ ├── agent/                → Python monitoring agent
+ ├── docker-compose.yml   → Multi-container setup
  ├── README.md
  ├── .gitignore
 ```
 
 ---
 
-## 🖥️ How It Works (Process Flow)
+## 🖥️ Process Flow
 
-1️⃣ Python Agent collects system metrics every few seconds
-2️⃣ Sends metrics to `/api/metrics` endpoint
+1️⃣ Agent collects metrics
+2️⃣ Sends data to backend API
 3️⃣ Backend saves metrics
-4️⃣ Rule engine checks thresholds
-5️⃣ If abnormal → AI generates incident report
-6️⃣ Incident ticket saved in database
-7️⃣ Dashboard displays everything live
+4️⃣ Rule engine checks severity
+5️⃣ AI generates incident summary
+6️⃣ Incident ticket stored
+7️⃣ Email alert triggered
+8️⃣ Dashboard updates live
 
 ---
 
@@ -126,7 +174,7 @@ systemmonitor/
 | CPU ≥ 90 OR RAM ≥ 90 OR Disk ≥ 95 | CRITICAL          |
 | CPU ≥ 80 OR RAM ≥ 80 OR Disk ≥ 90 | HIGH              |
 | CPU ≥ 65 OR RAM ≥ 65 OR Disk ≥ 80 | MEDIUM            |
-| Else                              | LOW (no incident) |
+| Else                              | LOW (No Incident) |
 
 ---
 
@@ -137,38 +185,31 @@ systemmonitor/
 * Docker
 * Docker Compose
 
-### Run everything with one command
+### Run Everything
 
 ```
 docker compose up --build
 ```
 
-### Services started
+### Services Started
 
 | Service      | Port                                           |
 | ------------ | ---------------------------------------------- |
 | Backend API  | [http://localhost:8080](http://localhost:8080) |
 | MySQL DB     | localhost:3307                                 |
-| Python Agent | Auto-runs                                      |
-| Dashboard    | Open index.html in browser                     |
+| Python Agent | Auto Runs                                      |
+| Dashboard    | Open dashboard.html                            |
 
 ---
 
-## 🔧 Backend Environment Variables
-
-Set Groq API key:
+## 🔧 Environment Variables
 
 ```
-GROQ_API_KEY=your_api_key_here
+GROQ_API_KEY=your_groq_api_key
+SPRING_MAIL_USERNAME=your_email@gmail.com
+SPRING_MAIL_PASSWORD=your_app_password
+ALERT_RECIPIENT_EMAIL=receiver_email@gmail.com
 ```
-
----
-
-## 📈 Dashboard View
-
-* Live CPU / RAM / Disk charts
-* Metrics history table
-* Incident tickets table
 
 ---
 
@@ -183,38 +224,34 @@ GROQ_API_KEY=your_api_key_here
 
 ---
 
-## 🖥️ Python Agent Setup (Standalone)
-
-If running without Docker:
+## 🖥️ Python Agent Standalone Run
 
 ```
 cd agent
 python agent.py
 ```
 
-Agent automatically sends metrics to backend every few seconds.
-
 ---
 
-## 🎯 Why This Project is Industry-Ready
+## 🎯 Why This Project is Placement-Ready
 
-✔ Simulates enterprise monitoring systems (Nagios, Zabbix, Datadog)
-✔ Demonstrates DevOps automation
-✔ AI-powered reporting
-✔ Microservice-like architecture
+✔ Enterprise-style monitoring simulation
+✔ AI automation integration
+✔ Email alert system
+✔ REST API architecture
+✔ Database persistence
 ✔ Dockerized deployment
-✔ Clean REST APIs
-✔ Database integration
+✔ DevOps + Backend showcase
 
 ---
 
 ## 🔮 Future Enhancements
 
-* Email alerts on CRITICAL incidents
-* User authentication
+* Slack / WhatsApp alerts
+* Authentication & roles
 * Grafana integration
 * Kubernetes deployment
-* Historical analytics reports
+* Historical analytics
 * Multi-server monitoring
 
 ---
@@ -223,11 +260,11 @@ Agent automatically sends metrics to backend every few seconds.
 
 **Seenivasan H**
 Final Year MCA Student
-Aspiring Java Backend / DevOps Engineer
+Aspiring Java Backend & DevOps Engineer
 
 ---
 
-## ⭐ How to Run Quick Demo
+## ⭐ Quick Demo
 
 ```
 git clone <your-repo-url>
