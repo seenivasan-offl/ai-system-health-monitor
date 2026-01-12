@@ -1,0 +1,50 @@
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: system_monitor
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uuser", "-puser"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./systemmonitor
+    container_name: systemmonitor-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./systemmonitor/src/main/resources/static:/app/resources/static
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/system_monitor?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: user
+      GROQ_API_KEY: ${GROQ_API_KEY}
+
+  agent:
+    build: ./agent
+    container_name: systemmonitor-agent
+    restart: always
+    depends_on:
+      - backend
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql

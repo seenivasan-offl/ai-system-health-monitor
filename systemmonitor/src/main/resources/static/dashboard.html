@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI System Health Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(120deg,#0f172a,#1e293b);
+            color: white;
+        }
+        h2 { text-align:center; }
+
+        .container {
+            width: 95%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px #0ea5e9;
+            width: 300px;
+            text-align: center;
+        }
+
+        table {
+            width:100%;
+            border-collapse: collapse;
+            background:#111827;
+            margin-top:20px;
+        }
+        th, td {
+            padding:10px;
+            border-bottom:1px solid #374151;
+            text-align:center;
+        }
+        th {
+            background:#0ea5e9;
+        }
+        tr:hover {
+            background:#1e293b;
+        }
+
+        #systemStatus {
+            text-align:center;
+            font-size:20px;
+            margin:15px;
+            font-weight:bold;
+        }
+
+        input {
+            padding:10px;
+            border-radius:8px;
+            border:none;
+        }
+
+        button {
+            padding:10px 15px;
+            border:none;
+            border-radius:8px;
+            background:#0ea5e9;
+            color:white;
+            cursor:pointer;
+        }
+
+        /* 🔔 Top-right Email Dropdown */
+        .email-dropdown {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .email-menu {
+            display:none;
+            margin-top:8px;
+            background:#1f2937;
+            padding:15px;
+            border-radius:10px;
+            box-shadow:0 0 10px #0ea5e9;
+            width:230px;
+        }
+
+        .email-menu input {
+            width:100%;
+            margin-bottom:8px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🔔 Email Subscribe Dropdown -->
+<div class="email-dropdown">
+    <button onclick="toggleDropdown()">📧 Subscribe</button>
+
+    <div id="emailMenu" class="email-menu">
+        <input type="email" id="emailInput" placeholder="Enter your email">
+        <button onclick="subscribeEmail()">Subscribe</button>
+        <p id="subMsg"></p>
+    </div>
+</div>
+
+
+<div class="container">
+
+    <h2>🤖 AI System Health Dashboard</h2>
+    <div id="systemStatus">Loading system status...</div>
+
+    <!-- Charts Section -->
+    <div class="cards">
+        <div class="card">
+            <h3>CPU Usage</h3>
+            <canvas id="cpuChart"></canvas>
+        </div>
+        <div class="card">
+            <h3>RAM Usage</h3>
+            <canvas id="ramChart"></canvas>
+        </div>
+        <div class="card">
+            <h3>Disk Usage</h3>
+            <canvas id="diskChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Metrics Table -->
+    <h2>📊 Server Metrics</h2>
+    <table id="metricsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>CPU %</th>
+            <th>RAM %</th>
+            <th>Disk %</th>
+            <th>Time</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Incidents Table -->
+    <h2>🚨 Incident Tickets</h2>
+    <table id="incidentsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Summary</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Time</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+</div>
+
+<script>
+    let cpuChart, ramChart, diskChart;
+
+    function createChart(chartId){
+        return new Chart(document.getElementById(chartId), {
+            type: 'doughnut',
+            data: {
+                labels: ['Used', 'Free'],
+                datasets: [{
+                    data: [0,100],
+                    backgroundColor: ['#0ea5e9','#1f2937']
+                }]
+            },
+            options:{
+                plugins:{legend:{display:false}},
+                cutout:'70%'
+            }
+        });
+    }
+
+    function getColor(value){
+        if(value >= 90) return "#ef4444";
+        if(value >= 80) return "#f59e0b";
+        return "#0ea5e9";
+    }
+
+    cpuChart = createChart("cpuChart");
+    ramChart = createChart("ramChart");
+    diskChart = createChart("diskChart");
+
+    function toggleDropdown(){
+        let menu = document.getElementById("emailMenu");
+        menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
+
+    function loadMetrics(){
+        fetch("http://localhost:8080/api/dashboard/metrics")
+        .then(res => res.json())
+        .then(data => {
+            let rows="";
+
+            if(data.length>0){
+                let m = data[data.length - 1];
+
+                cpuChart.data.datasets[0].data=[m.cpuUsage,100-m.cpuUsage];
+                ramChart.data.datasets[0].data=[m.ramUsage,100-m.ramUsage];
+                diskChart.data.datasets[0].data=[m.diskUsage,100-m.diskUsage];
+
+                cpuChart.data.datasets[0].backgroundColor=[getColor(m.cpuUsage),'#1f2937'];
+                ramChart.data.datasets[0].backgroundColor=[getColor(m.ramUsage),'#1f2937'];
+                diskChart.data.datasets[0].backgroundColor=[getColor(m.diskUsage),'#1f2937'];
+
+                cpuChart.update();
+                ramChart.update();
+                diskChart.update();
+
+                if(m.cpuUsage<65 && m.ramUsage<65 && m.diskUsage<80)
+                    document.getElementById("systemStatus").innerText="✅ ALL SYSTEMS NORMAL";
+                else
+                    document.getElementById("systemStatus").innerText="🚨 ATTENTION REQUIRED";
+            }
+
+            data.forEach(m=>{
+                rows += `<tr>
+                    <td>${m.id}</td>
+                    <td>${m.cpuUsage}%</td>
+                    <td>${m.ramUsage}%</td>
+                    <td>${m.diskUsage}%</td>
+                    <td>${m.createdAt}</td>
+                </tr>`;
+            });
+
+            document.querySelector("#metricsTable tbody").innerHTML = rows;
+        });
+    }
+
+    function loadIncidents(){
+        fetch("http://localhost:8080/api/dashboard/incidents")
+        .then(res => res.json())
+        .then(data => {
+            let rows="";
+            data.forEach(i=>{
+                let rowColor =
+                    i.priority=="CRITICAL" ? "#7f1d1d" :
+                    i.priority=="HIGH" ? "#78350f" : "";
+
+                rows += `<tr style="background:${rowColor}">
+                    <td>${i.ticketId}</td>
+                    <td>${i.issueSummary}</td>
+                    <td>${i.priority}</td>
+                    <td>${i.status}</td>
+                    <td>${i.createdAt}</td>
+                </tr>`;
+            });
+
+            document.querySelector("#incidentsTable tbody").innerHTML = rows;
+        });
+    }
+
+    function subscribeEmail(){
+        let email = document.getElementById("emailInput").value;
+
+        if(email.trim()===""){
+            alert("Enter valid email!");
+            return;
+        }
+
+        fetch("http://localhost:8080/api/subscribe",{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ email: email })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("subMsg").innerText="✅ Subscribed Successfully!";
+            document.getElementById("emailInput").value="";
+        })
+        .catch(err=>{
+            document.getElementById("subMsg").innerText="❌ Subscription Failed!";
+        });
+    }
+
+    setInterval(()=>{
+        loadMetrics();
+        loadIncidents();
+    },5000);
+
+    loadMetrics();
+    loadIncidents();
+</script>
+
+</body>
+</html>
