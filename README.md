@@ -5,6 +5,8 @@ A **real-world DevOps + AI integrated monitoring system** that continuously coll
 This project demonstrates **backend engineering, AI integration, rule-based automation, email alerting, dashboard visualization, Docker deployment, and agent-based monitoring** — making it ideal for placement interviews.
 
 ---
+# Project Banner
+![Uploading ChatGPT Image Jan 12, 2026, 04_07_31 PM.png…]()
 
 ## 🚀 Project Overview
 
