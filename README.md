@@ -1,16 +1,3 @@
-Perfect — now I’ll give you a **professional, placement-ready README.md** that explains:
-
-✔ Project purpose
-✔ Architecture
-✔ AI model usage
-✔ Full setup steps
-✔ How everything works
-✔ Future enhancements
-
-You can **copy-paste directly** as `README.md`.
-
----
-
 # 🤖 AI System Health Monitor & Auto-Incident Ticket Generator
 
 A **real-world DevOps + AI integrated monitoring system** that continuously collects server health metrics (CPU, RAM, Disk), analyzes them using an AI model, and automatically generates incident tickets when abnormal conditions are detected — just like enterprise IT monitoring tools.
