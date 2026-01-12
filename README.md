@@ -7,6 +7,8 @@ This project demonstrates **backend engineering, AI integration, rule-based auto
 ---
 # Project Banner
 <img width="1536" height="1024" alt="ChatGPT Image Jan 12, 2026, 04_07_31 PM" src="https://github.com/user-attachments/assets/510ef778-5ffe-4f40-bb35-cea23c652fd3" />
+
+---
 ## 🚀 Project Overview
 
 Modern IT infrastructures require continuous monitoring and instant alerting.
